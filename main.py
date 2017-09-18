@@ -1,21 +1,28 @@
+import json
+import crawler_html as ch
 import bs4
 from urllib.request import urlopen
-import info_noticias_valor as iv
-import pandas as pd
 
 
-# obtem lista de links da pagina do valor
-url_valor_impresso = 'http://www.valor.com.br/impresso'
-html = urlopen (url_valor_impresso)
-soup = bs4.BeautifulSoup (html, 'lxml')
+with open('20160717_20150719_urls_valor_economico.txt') as json_data:
+    d = json.load(json_data)
+    json_data.close()
 
-# Busca os links das noticias na pagina principal
-url_base = 'http://www.valor.com.br'
-links_alor = soup.find_all ('a', title=False, href=True, class_="valor-impresso-indice-node-title")
-urls = [url_base+link['href'] for link in links_alor]
+ch.create_DB('Valor_Economico', 'html_20160717_20150719')
+
+htmls = {}
+for date in d.keys():
+    url_html = {}
+    for url_news in d[date]:
+        html = urlopen (url_news)
+        soup = bs4.BeautifulSoup (html, 'lxml')
+        url_html[url_news] = soup.get_text()
+
+    htmls[date] = url_html
+
+    address = 'C:\\Users\\Mauricio\\PycharmProjects\\Scraping_Valor_Economico\\output\\'
+    with open(address+'{0}_htmls_valor_economico.txt'.format(date), 'w') as outfile:
+        json.dump(htmls, outfile)
 
 
-# Obtem as informacoes de cada noticia
-noticias = {}
-for url in urls:
-    noticias[url] = iv.get_noticia_valor_economico(url)
+
